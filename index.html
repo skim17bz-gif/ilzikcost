@@ -5,61 +5,162 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>일직동 실거래가 알림이</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700&display=swap');
+        body { font-family: 'Pretendard', sans-serif; }
+    </style>
 </head>
-<body class="bg-gray-100 p-4">
-    <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6">
-        <h1 class="text-xl font-bold text-gray-800 mb-4">🏠 일직동 실거래가 조회</h1>
-        
-        <div class="space-y-3 mb-6">
-            <select id="startYm" class="w-full p-2 border rounded"><option value="202601">2026년 01월부터</option></select>
-            <select id="endYm" class="w-full p-2 border rounded"><option value="202604">2026년 04월까지</option></select>
-            <button onclick="fetchData()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">실거래가 새로고침</button>
+<body class="bg-slate-50 min-h-screen pb-10">
+
+    <div class="max-w-lg mx-auto bg-white min-h-screen shadow-lg">
+        <div class="bg-slate-800 p-6 text-white text-center">
+            <h1 class="text-2xl font-bold italic">광명역세권 실거래가</h1>
+            <p class="text-slate-400 text-sm mt-1">일직동 대장 아파트 5개 단지</p>
         </div>
 
-        <div id="resultList" class="space-y-4">
-            <p class="text-gray-500 text-center">버튼을 눌러 데이터를 불러오세요.</p>
+        <div class="p-4 space-y-3 border-b sticky top-0 bg-white z-10 shadow-sm">
+            <div class="grid grid-cols-2 gap-2">
+                <input type="month" id="startYm" class="p-2 border rounded-lg text-sm" value="2026-01">
+                <input type="month" id="endYm" class="p-2 border rounded-lg text-sm" value="2026-04">
+            </div>
+            <select id="selectedApt" class="w-full p-2 border rounded-lg text-sm bg-gray-50">
+                <option value="전체 단지">전체 단지</option>
+                <option value="광명역써밋플레이스">광명역써밋플레이스</option>
+                <option value="유-플래닛태영데시앙">유-플래닛태영데시앙</option>
+                <option value="광명역푸르지오">광명역푸르지오</option>
+                <option value="광명역파크자이">광명역파크자이</option>
+                <option value="광명역센트럴자이">광명역센트럴자이</option>
+            </select>
+            <select id="selectedArea" class="w-full p-2 border rounded-lg text-sm bg-gray-50">
+                <option value="전체 면적">전체 면적</option>
+                <option value="59형(26평)">59형(26평)</option>
+                <option value="84형(34평)">84형(34평)</option>
+            </select>
+            <button onclick="fetchAllData()" id="btnFetch" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold active:bg-blue-800 transition-colors shadow-md">
+                실거래가 조회하기
+            </button>
+        </div>
+
+        <div id="resultList" class="p-4 space-y-3">
+            <div class="text-center text-gray-400 mt-20">
+                <p>설정 후 하단 버튼을 눌러주세요.</p>
+            </div>
         </div>
     </div>
 
     <script>
-        async function fetchData() {
-            const API_KEY = "ee8228c232f254283850874c0292ab2b0f168d71fd696875d3e33186f93a7e60";
-            const resultDiv = document.getElementById('resultList');
-            resultDiv.innerHTML = '<p class="text-center">데이터를 불러오는 중...</p>';
+        const API_KEY = "ee8228c232f254283850874c0292ab2b0f168d71fd696875d3e33186f93a7e60";
+        const PROXY_URL = "https://cors-anywhere.herokuapp.com/"; // CORS 에러 방지용 프록시
 
-            // 여기서는 예시로 202604 한 달치만 가져오는 로직 (반복문 추가 가능)
-            const url = `https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev?serviceKey=${API_KEY}&LAWD_CD=41210&DEAL_YMD=202604&numOfRows=100`;
+        async function fetchAllData() {
+            const startYmRaw = document.getElementById('startYm').value.replace("-", "");
+            const endYmRaw = document.getElementById('endYm').value.replace("-", "");
+            const selectedApt = document.getElementById('selectedApt').value;
+            const selectedArea = document.getElementById('selectedArea').value;
+            const resultDiv = document.getElementById('resultList');
+            const btn = document.getElementById('btnFetch');
+
+            btn.disabled = true;
+            btn.innerText = "데이터 요청 중...";
+            resultDiv.innerHTML = '<div class="text-center py-10"><p class="animate-pulse">국토부 서버에서 데이터를 가져오는 중입니다...</p><p class="text-xs text-red-500 mt-2">※ 처음 사용 시 CORS 허용이 필요할 수 있습니다.</p></div>';
+
+            const months = getMonthList(startYmRaw, endYmRaw);
+            let allData = [];
+            const targetApts = ["써밋", "데시앙", "푸르지오", "파크자이", "센트럴"];
 
             try {
-                const res = await fetch(url);
-                const text = await res.text();
-                const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(text, "text/xml");
-                const items = xmlDoc.getElementsByTagName("item");
-                
-                let html = "";
-                const targets = ["써밋플레이스", "데시앙", "푸르지오", "파크자이", "센트럴자이"];
-
-                for (let item of items) {
-                    const aptNm = item.getElementsByTagName("aptNm")[0].textContent;
-                    const price = item.getElementsByTagName("dealAmount")[0].textContent;
-                    const area = item.getElementsByTagName("excluUseAr")[0].textContent;
+                for (const ym of months) {
+                    const url = `https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev?serviceKey=${API_KEY}&LAWD_CD=41210&DEAL_YMD=${ym}&numOfRows=1000`;
                     
-                    if (targets.some(t => aptNm.includes(t)) && parseFloat(area) <= 85) {
-                        html += `
-                        <div class="border-b pb-2">
-                            <div class="font-bold text-blue-600">${aptNm}</div>
-                            <div class="flex justify-between text-sm text-gray-600">
-                                <span>${parseFloat(area).toFixed(0)}형</span>
-                                <span class="font-bold text-red-500">${(parseInt(price.replace(',',''))/10000).toFixed(2)}억</span>
-                            </div>
-                        </div>`;
+                    // 프록시 서버를 통해 호출
+                    const res = await fetch(PROXY_URL + url);
+                    const text = await res.text();
+                    const parser = new DOMParser();
+                    const xml = parser.parseFromString(text, "text/xml");
+                    const items = xml.getElementsByTagName("item");
+
+                    for (let item of items) {
+                        const aptNm = item.getElementsByTagName("aptNm")[0].textContent.trim();
+                        const umdNm = item.getElementsByTagName("umdNm")[0].textContent.trim();
+                        const areaVal = parseFloat(item.getElementsByTagName("excluUseAr")[0].textContent);
+                        
+                        if (umdNm === "일직동" && areaVal <= 85) {
+                            const isTarget = selectedApt === "전체 단지" ? 
+                                targetApts.some(t => aptNm.includes(t)) : 
+                                aptNm.includes(selectedApt.replace("광명역","").replace("유-플래닛","").replace("태영","").trim());
+
+                            if (isTarget) {
+                                let areaName = "";
+                                let matchArea = false;
+                                const floorInt = Math.floor(areaVal);
+
+                                if (floorInt === 59) {
+                                    areaName = "59형(26평)";
+                                    if (selectedArea === "전체 면적" || selectedArea === "59형(26평)") matchArea = true;
+                                } else if (floorInt === 84) {
+                                    areaName = "84형(34평)";
+                                    if (selectedArea === "전체 면적" || selectedArea === "84형(34평)") matchArea = true;
+                                } else {
+                                    areaName = areaVal.toFixed(2);
+                                    if (selectedArea === "전체 면적") matchArea = true;
+                                }
+
+                                if (matchArea) {
+                                    const price = (parseInt(item.getElementsByTagName("dealAmount")[0].textContent.replace(",", "")) / 10000).toFixed(2);
+                                    const date = `${item.getElementsByTagName("dealYear")[0].textContent}-${item.getElementsByTagName("dealMonth")[0].textContent.padStart(2,'0')}-${item.getElementsByTagName("dealDay")[0].textContent.padStart(2,'0')}`;
+                                    const floor = item.getElementsByTagName("floor")[0].textContent;
+                                    allData.push({ aptNm, areaName, price, floor, date });
+                                }
+                            }
+                        }
                     }
                 }
-                resultDiv.innerHTML = html || '<p class="text-center">조회된 데이터가 없습니다.</p>';
+
+                // 정렬: 단지명 -> 날짜 최신순
+                allData.sort((a, b) => a.aptNm.localeCompare(b.aptNm) || new Date(b.date) - new Date(a.date));
+
+                renderData(allData);
             } catch (e) {
-                resultDiv.innerHTML = '<p class="text-center text-red-500">에러가 발생했습니다.</p>';
+                resultDiv.innerHTML = `<div class="p-4 bg-red-50 text-red-600 rounded-lg text-sm text-center">에러가 발생했습니다.<br>CORS 허용 서버가 응답하지 않을 수 있습니다.<br><a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank" class="underline font-bold">여기를 클릭해 [Request access] 버튼을 먼저 눌러주세요.</a></div>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "실거래가 조회하기";
             }
+        }
+
+        function renderData(data) {
+            const resultDiv = document.getElementById('resultList');
+            if (data.length === 0) {
+                resultDiv.innerHTML = '<p class="text-center py-10 text-gray-400">조건에 맞는 데이터가 없습니다.</p>';
+                return;
+            }
+
+            let html = `<p class="text-xs text-gray-400 mb-2">총 ${data.length}건의 거래가 발견되었습니다.</p>`;
+            data.forEach(d => {
+                html += `
+                <div class="bg-white border rounded-xl p-4 shadow-sm mb-3">
+                    <div class="flex justify-between items-start">
+                        <h3 class="font-bold text-slate-800 text-lg">${d.aptNm}</h3>
+                        <span class="bg-blue-50 text-blue-600 text-xs px-2 py-1 rounded-md font-bold">${d.date}</span>
+                    </div>
+                    <div class="flex justify-between mt-3 items-center">
+                        <div class="text-sm text-gray-500">${d.areaName} / ${d.floor}층</div>
+                        <div class="text-xl font-extrabold text-red-500">${d.price}억</div>
+                    </div>
+                </div>`;
+            });
+            resultDiv.innerHTML = html;
+        }
+
+        function getMonthList(start, end) {
+            let result = [];
+            let currY = parseInt(start.substring(0, 4)), currM = parseInt(start.substring(4, 6));
+            let endY = parseInt(end.substring(0, 4)), endM = parseInt(end.substring(4, 6));
+            while (currY < endY || (currY === endY && currM <= endM)) {
+                result.push(currY.toString() + currM.toString().padStart(2, '0'));
+                if (++currM > 12) { currM = 1; currY++; }
+            }
+            return result;
         }
     </script>
 </body>

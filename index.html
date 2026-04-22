@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일직동 실거래가 알림이</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-4">
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6">
+        <h1 class="text-xl font-bold text-gray-800 mb-4">🏠 일직동 실거래가 조회</h1>
+        
+        <div class="space-y-3 mb-6">
+            <select id="startYm" class="w-full p-2 border rounded"><option value="202601">2026년 01월부터</option></select>
+            <select id="endYm" class="w-full p-2 border rounded"><option value="202604">2026년 04월까지</option></select>
+            <button onclick="fetchData()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">실거래가 새로고침</button>
+        </div>
+
+        <div id="resultList" class="space-y-4">
+            <p class="text-gray-500 text-center">버튼을 눌러 데이터를 불러오세요.</p>
+        </div>
+    </div>
+
+    <script>
+        async function fetchData() {
+            const API_KEY = "ee8228c232f254283850874c0292ab2b0f168d71fd696875d3e33186f93a7e60";
+            const resultDiv = document.getElementById('resultList');
+            resultDiv.innerHTML = '<p class="text-center">데이터를 불러오는 중...</p>';
+
+            // 여기서는 예시로 202604 한 달치만 가져오는 로직 (반복문 추가 가능)
+            const url = `https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev?serviceKey=${API_KEY}&LAWD_CD=41210&DEAL_YMD=202604&numOfRows=100`;
+
+            try {
+                const res = await fetch(url);
+                const text = await res.text();
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(text, "text/xml");
+                const items = xmlDoc.getElementsByTagName("item");
+                
+                let html = "";
+                const targets = ["써밋플레이스", "데시앙", "푸르지오", "파크자이", "센트럴자이"];
+
+                for (let item of items) {
+                    const aptNm = item.getElementsByTagName("aptNm")[0].textContent;
+                    const price = item.getElementsByTagName("dealAmount")[0].textContent;
+                    const area = item.getElementsByTagName("excluUseAr")[0].textContent;
+                    
+                    if (targets.some(t => aptNm.includes(t)) && parseFloat(area) <= 85) {
+                        html += `
+                        <div class="border-b pb-2">
+                            <div class="font-bold text-blue-600">${aptNm}</div>
+                            <div class="flex justify-between text-sm text-gray-600">
+                                <span>${parseFloat(area).toFixed(0)}형</span>
+                                <span class="font-bold text-red-500">${(parseInt(price.replace(',',''))/10000).toFixed(2)}억</span>
+                            </div>
+                        </div>`;
+                    }
+                }
+                resultDiv.innerHTML = html || '<p class="text-center">조회된 데이터가 없습니다.</p>';
+            } catch (e) {
+                resultDiv.innerHTML = '<p class="text-center text-red-500">에러가 발생했습니다.</p>';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -14,14 +14,14 @@
 
     <div class="max-w-lg mx-auto bg-white min-h-screen shadow-lg">
         <div class="bg-slate-800 p-6 text-white text-center">
-            <h1 class="text-2xl font-bold italic">광명역세권 실거래가</h1>
-            <p class="text-slate-400 text-sm mt-1 font-bold">Google Apps Script 서버 모드</p>
+            <h1 class="text-2xl font-bold italic">광명역 아파트 실거래가</h1>
+            <p class="text-slate-400 text-sm mt-1 font-bold">조회기간과 단지 및 면적을 선택한 후, 조회 버튼을 눌러주세요</p>
         </div>
 
         <div class="p-4 space-y-3 border-b sticky top-0 bg-white z-10 shadow-sm">
             <div class="grid grid-cols-2 gap-2">
-                <input type="month" id="startYm" class="p-2 border rounded-lg text-sm" value="2026-01">
-                <input type="month" id="endYm" class="p-2 border rounded-lg text-sm" value="2026-04">
+                <input type="month" id="startYm" class="p-2 border rounded-lg text-sm">
+                <input type="month" id="endYm" class="p-2 border rounded-lg text-sm">
             </div>
             <select id="selectedApt" class="w-full p-2 border rounded-lg text-sm bg-gray-50">
                 <option value="전체 단지">전체 단지</option>
@@ -37,7 +37,7 @@
                 <option value="84형(34평)">84형(34평)</option>
             </select>
             <button onclick="fetchAllData()" id="btnFetch" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold active:bg-blue-800 transition-colors shadow-md">
-                실거래가 조회하기
+                조회하기
             </button>
         </div>
 
@@ -49,8 +49,21 @@
     </div>
 
     <script>
-        // ⚠️ 여기에 본인의 구글 앱스 스크립트 웹 앱 URL을 붙여넣으세요!
         const GAS_URL = "https://script.google.com/macros/s/AKfycbyjZIkJA0mbMDH3AKrocAmwSAOsoAwajuU-5ItPoADNk1DHzHAuHCajIltNP0GZle0Tyw/exec";
+
+        // --- 추가된 부분: 페이지 로드 시 '저번 달'을 기본값으로 설정 ---
+        window.onload = function() {
+            const now = new Date();
+            // 현재 날짜에서 한 달을 뺌
+            now.setMonth(now.getMonth() - 1);
+            
+            const year = now.getFullYear();
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const lastMonth = `${year}-${month}`;
+
+            document.getElementById('startYm').value = lastMonth;
+            document.getElementById('endYm').value = lastMonth;
+        };
 
         async function fetchAllData() {
             const startYm = document.getElementById('startYm').value.replace("-", "");
@@ -70,11 +83,9 @@
             resultDiv.innerHTML = '<div class="text-center py-10"><p class="animate-bounce">🚀 구글 서버에서 데이터를 가져오는 중...</p></div>';
 
             try {
-                // 구글 앱스 스크립트 서버로 데이터 요청
                 const response = await fetch(`${GAS_URL}?startYm=${startYm}&endYm=${endYm}`);
                 const data = await response.json();
 
-                // 프론트엔드 필터링 적용 (단지 및 면적)
                 const filteredData = data.filter(d => {
                     const matchApt = selectedApt === "전체 단지" ? true : d.aptNm.includes(selectedApt.replace("광명역","").replace("유-플래닛","").replace("태영","").trim());
                     const matchArea = selectedArea === "전체 면적" ? true : d.area === selectedArea;
@@ -87,7 +98,7 @@
                 resultDiv.innerHTML = `<div class="p-4 bg-red-50 text-red-600 rounded-lg text-sm text-center font-bold">서버 연결에 실패했습니다.<br>배포 설정(액세스 권한: 모든 사용자)을 확인해주세요.</div>`;
             } finally {
                 btn.disabled = false;
-                btn.innerText = "실거래가 조회하기";
+                btn.innerText = "조회하기";
             }
         }
 

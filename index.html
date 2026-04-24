@@ -137,7 +137,7 @@
                 document.getElementById('sortContainer').classList.remove('hidden');
                 sortData('date'); 
             } catch (e) {
-                resultDiv.innerHTML = `<div class="p-4 bg-red-50 text-red-600 rounded-xl text-center font-bold text-xs">서버 연결 실패. GAS 배포 설정을 확인하세요.</div>`;
+                resultDiv.innerHTML = `<div class="p-4 bg-red-50 text-red-600 rounded-xl text-center font-bold text-xs">조회 조건을 확인해 주세요</div>`;
             } finally {
                 btn.disabled = false; btn.innerText = "조회하기";
             }

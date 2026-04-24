@@ -108,32 +108,59 @@ function renderData(data) {
         return;
     }
 
-  let html = `<p class="text-xs text-gray-400 mb-2 font-bold">총 ${data.length}건의 거래 발견</p>`;
+    let html = `<p class="text-xs text-gray-400 mb-2 font-bold">총 ${data.length}건의 거래 발견</p>`;
+    
     data.forEach(d => {
-        // --- 여기에서 GAS가 보낸 isMax를 확인합니다 ---
-        const maxBadge = d.isMax ? '<span class="ml-2 bg-red-100 text-red-600 text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse">🔥신고가</span>' : '';
-        const cardBorder = d.isMax ? 'border-red-400 ring-1 ring-red-400' : 'border-gray-200';
+        // --- 1. 데이터 가공 ---
+        const currentPrice = parseFloat(d.price.replace("억", ""));
+        const previousMax = parseFloat(d.prevMax.replace("억", ""));
+        
+        // 등락 비율 계산 (현재가 / 직전 최고가 * 100)
+        let ratioText = "";
+        let ratioColor = "text-gray-400";
+        
+        if (previousMax > 0) {
+            const ratio = ((currentPrice / previousMax) * 100).toFixed(1);
+            const diff = (currentPrice - previousMax).toFixed(2);
+            const diffText = diff > 0 ? `(+${diff}억)` : (diff < 0 ? `(${diff}억)` : "(보합)");
+            ratioText = `${ratio}% ${diffText}`;
+            if (currentPrice > previousMax) ratioColor = "text-red-500 font-bold";
+            else if (currentPrice < previousMax) ratioColor = "text-blue-500 font-bold";
+        }
+
+        // 신고가 뱃지 및 카드 스타일
+        const isNewMax = d.isMax && (currentPrice >= previousMax);
+        const maxBadge = isNewMax ? `<span class="ml-2 bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse">신고가 🔥</span>` : '';
+        const cardClass = isNewMax ? 'border-red-300 bg-red-50/30' : 'border-gray-200 bg-white';
 
         html += `
-        <div class="bg-white border ${cardBorder} rounded-xl p-4 shadow-sm mb-3">
+        <div class="${cardClass} border rounded-xl p-4 shadow-sm mb-3">
             <div class="flex justify-between items-start">
-                <h3 class="font-bold text-slate-800 text-lg">
-                    ${d.aptNm} ${maxBadge}
-                </h3>
-                <span class="bg-blue-50 text-blue-600 text-xs px-2 py-1 rounded-md font-bold">${d.date}</span>
+                <div>
+                    <h3 class="font-bold text-slate-800 text-lg flex items-center">
+                        ${d.aptNm} ${maxBadge}
+                    </h3>
+                    <p class="text-[11px] text-gray-400 mt-0.5">${d.date} 거래</p>
+                </div>
+                <span class="bg-slate-100 text-slate-600 text-[11px] px-2 py-1 rounded-md font-bold">${d.floor}층</span>
             </div>
-            <div class="flex justify-between mt-3 items-center">
-                <div class="text-sm text-gray-500">${d.area} / ${d.floor}층</div>
+
+            <div class="flex justify-between mt-4 items-end">
+                <div class="text-sm text-gray-500 font-medium">${d.area}</div>
                 <div class="text-right">
-                    ${d.isMax && d.prevMax !== "0.00억" ? `<p class="text-[10px] text-gray-400 line-through">종전최고 ${d.prevMax}</p>` : ''}
-                    <div class="text-xl font-extrabold text-red-500">${d.price}</div>
+                    <div class="mb-1 text-[11px] leading-tight">
+                        <span class="text-gray-400">직전 최고: </span>
+                        <span class="text-gray-600 font-semibold">${d.prevMax}</span>
+                        <span class="text-gray-400 text-[10px]">(${d.prevDate})</span>
+                        <div class="${ratioColor} mt-0.5">${ratioText}</div>
+                    </div>
+                    <div class="text-2xl font-black text-blue-600">${d.price}</div>
                 </div>
             </div>
         </div>`;
     });
     resultDiv.innerHTML = html;
 }
-
     </script>
 </body>
 </html>

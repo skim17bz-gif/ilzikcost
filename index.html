@@ -20,10 +20,10 @@
 
         <div class="p-4 space-y-3 border-b sticky top-0 bg-white z-20 shadow-sm">
             <div class="grid grid-cols-2 gap-2">
-                <input type="month" id="startYm" class="p-2 border rounded-lg text-sm">
-                <input type="month" id="endYm" class="p-2 border rounded-lg text-sm">
+                <input type="month" id="startYm" class="p-3 border rounded-lg text-sm bg-white" placeholder="시작월">
+                <input type="month" id="endYm" class="p-3 border rounded-lg text-sm bg-white" placeholder="종료월">
             </div>
-            <select id="selectedApt" class="w-full p-2 border rounded-lg text-sm bg-gray-50">
+            <select id="selectedApt" class="w-full p-3 border rounded-lg text-sm bg-gray-50 cursor-pointer">
                 <option value="전체 단지">전체 단지</option>
                 <option value="광명역써밋플레이스">광명역써밋플레이스</option>
                 <option value="유-플래닛태영데시앙">유-플래닛태영데시앙</option>
@@ -31,22 +31,13 @@
                 <option value="광명역파크자이">광명역파크자이</option>
                 <option value="광명역센트럴자이">광명역센트럴자이</option>
             </select>
-            <select id="selectedArea" class="w-full p-2 border rounded-lg text-sm bg-gray-50">
+            <select id="selectedArea" class="w-full p-3 border rounded-lg text-sm bg-gray-50 cursor-pointer">
                 <option value="전체 면적">전체 면적</option>
                 <option value="59형(26평)">59형(26평)</option>
                 <option value="84형(34평)">84형(34평)</option>
             </select>
-            <button onclick="fetchAllData()" id="btnFetch" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold active:bg-blue-800 transition-colors shadow-md">
+            <button onclick="fetchAllData()" id="btnFetch" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold active:bg-blue-800 transition-colors shadow-md text-base">
                 조회하기
-            </button>
-        </div>
-
-        <div id="sortContainer" class="hidden flex gap-2 p-4 pb-0">
-            <button onclick="sortData('date')" id="sortDateBtn" class="flex-1 py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                🗓 거래일자순 (최신)
-            </button>
-            <button onclick="sortData('price')" id="sortPriceBtn" class="flex-1 py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                💰 금액순 (높은순)
             </button>
         </div>
 
@@ -58,15 +49,18 @@
     </div>
 
     <script>
+        // ⚠️ 여기에 본인의 구글 앱스 스크립트 웹 앱 URL을 붙여넣으세요!
         const GAS_URL = "https://script.google.com/macros/s/AKfycbyjZIkJA0mbMDH3AKrocAmwSAOsoAwajuU-5ItPoADNk1DHzHAuHCajIltNP0GZle0Tyw/exec";
-        let currentData = []; // 서버에서 받아온 원본 데이터를 저장할 변수
 
+        // 페이지 로드 시 '저번 달'을 기본값으로 설정
         window.onload = function() {
             const now = new Date();
             now.setMonth(now.getMonth() - 1);
+            
             const year = now.getFullYear();
             const month = (now.getMonth() + 1).toString().padStart(2, '0');
             const lastMonth = `${year}-${month}`;
+
             document.getElementById('startYm').value = lastMonth;
             document.getElementById('endYm').value = lastMonth;
         };
@@ -78,7 +72,6 @@
             const selectedArea = document.getElementById('selectedArea').value;
             const resultDiv = document.getElementById('resultList');
             const btn = document.getElementById('btnFetch');
-            const sortContainer = document.getElementById('sortContainer');
 
             if (!GAS_URL || GAS_URL.includes("여기에")) {
                 alert("GAS 웹 앱 URL을 설정해주세요.");
@@ -87,112 +80,77 @@
 
             btn.disabled = true;
             btn.innerText = "서버 연결 중...";
-            sortContainer.classList.add('hidden');
-            resultDiv.innerHTML = '<div class="text-center py-10"><p class="animate-bounce">🚀 데이터를 가져오는 중...</p></div>';
+            resultDiv.innerHTML = '<div class="text-center py-10"><p class="animate-bounce">🚀 구글 서버에서 데이터를 가져오는 중...</p></div>';
 
             try {
+                // 구글 앱스 스크립트 서버로 데이터 요청
                 const response = await fetch(`${GAS_URL}?startYm=${startYm}&endYm=${endYm}`);
                 const data = await response.json();
 
-                // 필터링 적용
-                currentData = data.filter(d => {
-                    const matchApt = selectedApt === "전체 단지" ? true : d.aptNm.includes(selectedApt.replace("광명역","").replace("유-플래닛","").replace("태영","").trim());
+                // 프론트엔드 필터링 적용 (단지 및 면적)
+                const filteredData = data.filter(d => {
+                    const matchApt = selectedApt === "전체 단지" ? true : d.aptNm === selectedApt;
                     const matchArea = selectedArea === "전체 면적" ? true : d.area === selectedArea;
                     return matchApt && matchArea;
                 });
 
-                if (currentData.length > 0) {
-                    sortContainer.classList.remove('hidden');
-                    sortData('date'); // 기본적으로 날짜순 정렬
-                } else {
-                    renderData(currentData);
-                }
+                renderData(filteredData);
             } catch (e) {
                 console.error(e);
-                resultDiv.innerHTML = `<div class="p-4 bg-red-50 text-red-600 rounded-lg text-sm text-center font-bold">서버 연결에 실패했습니다.</div>`;
+                resultDiv.innerHTML = `<div class="p-4 bg-red-50 text-red-600 rounded-lg text-sm text-center font-bold">서버 연결에 실패했습니다.<br>배포 설정(액세스 권한: 모든 사용자)을 확인해주세요.</div>`;
             } finally {
                 btn.disabled = false;
                 btn.innerText = "조회하기";
             }
         }
 
-        // 정렬 기능 함수
-        function sortData(type) {
-            const dateBtn = document.getElementById('sortDateBtn');
-            const priceBtn = document.getElementById('sortPriceBtn');
-
-            // 버튼 스타일 초기화
-            [dateBtn, priceBtn].forEach(b => {
-                b.classList.replace('bg-blue-600', 'bg-slate-100');
-                b.classList.replace('text-white', 'text-slate-600');
-            });
-
-            if (type === 'date') {
-                // 날짜 최신순 정렬
-                currentData.sort((a, b) => new Date(b.date) - new Date(a.date));
-                dateBtn.classList.replace('bg-slate-100', 'bg-blue-600');
-                dateBtn.classList.replace('text-slate-600', 'text-white');
-            } else if (type === 'price') {
-                // 금액 높은순 정렬
-                currentData.sort((a, b) => {
-                    const priceA = parseFloat(a.price.replace('억', ''));
-                    const priceB = parseFloat(b.price.replace('억', ''));
-                    return priceB - priceA;
-                });
-                priceBtn.classList.replace('bg-slate-100', 'bg-blue-600');
-                priceBtn.classList.replace('text-slate-600', 'text-white');
-            }
-            renderData(currentData);
-        }
-
         function renderData(data) {
-    const resultDiv = document.getElementById('resultList');
-    if (!data || data.length === 0) {
-        resultDiv.innerHTML = '<p class="text-center py-10 text-gray-400">조건에 맞는 데이터가 없습니다.</p>';
-        return;
-    }
+            const resultDiv = document.getElementById('resultList');
+            if (!data || data.length === 0) {
+                resultDiv.innerHTML = '<p class="text-center py-10 text-gray-400">조건에 맞는 데이터가 없습니다.</p>';
+                return;
+            }
 
-    let html = `<p class="text-[10px] text-gray-400 mb-1 font-bold">총 ${data.length}건의 거래 발견</p>`;
-    data.forEach(d => {
-        const maxTag = d.isMax ? `<span class="bg-amber-100 text-amber-700 text-[10px] px-2 py-1 rounded-md font-bold ml-2 animate-bounce border border-amber-300">👑 역대 신고가</span>` : '';
-        
-        // --- 퍼센트 계산 로직 추가 ---
-        const currentPrice = parseFloat(d.price.replace('억', ''));
-        const prevMaxPrice = parseFloat(d.prevMax.replace('억', ''));
-        let percentHtml = '';
+            let html = `<p class="text-[10px] text-gray-400 mb-1 font-bold">총 ${data.length}건의 거래 발견</p>`;
+            data.forEach(d => {
+                // 역대 신고가 왕관 태그
+                const maxTag = d.isMax ? `<span class="bg-amber-100 text-amber-700 text-[10px] px-2 py-1 rounded-md font-bold ml-2 animate-bounce border border-amber-300">👑 역대 신고가</span>` : '';
+                
+                // --- 퍼센트(%) 계산 로직 (유지) ---
+                const currentPrice = parseFloat(d.price.replace('억', ''));
+                const prevMaxPrice = parseFloat(d.prevMax.replace('억', ''));
+                let percentHtml = '';
 
-        if (prevMaxPrice > 0) {
-            const ratio = ((currentPrice / prevMaxPrice) * 100).toFixed(1);
-            let colorClass = 'text-gray-400'; // 기본
-            if (ratio >= 100) colorClass = 'text-red-500 font-bold'; // 신고가 돌파 시 빨간색
-            else if (ratio >= 95) colorClass = 'text-orange-500'; // 95% 이상 회복 시 주황색
-            
-            percentHtml = `<span class="${colorClass} ml-1">[${ratio}%]</span>`;
-        }
-        // --------------------------
+                if (prevMaxPrice > 0) {
+                    const ratio = ((currentPrice / prevMaxPrice) * 100).toFixed(1);
+                    let colorClass = 'text-gray-400'; // 기본: 회색
+                    if (ratio >= 100) colorClass = 'text-red-500 font-bold'; // 신고가 돌파: 빨간색
+                    else if (ratio >= 95) colorClass = 'text-orange-500'; // 95% 이상 회복: 주황색
+                    
+                    percentHtml = `<span class="${colorClass} ml-1">[${ratio}%]</span>`;
+                }
+                // ---------------------------------
 
-        html += `
-        <div class="bg-white border rounded-xl p-4 shadow-sm mb-3 active:bg-gray-50 transition-colors">
-            <div class="flex justify-between items-start">
-                <div class="flex items-center">
-                    <h3 class="font-bold text-slate-800 text-base">${d.aptNm}</h3>
-                    ${maxTag}
-                </div>
-                <span class="bg-slate-100 text-slate-500 text-[10px] px-2 py-1 rounded-md font-bold">${d.date}</span>
-            </div>
-            <div class="flex justify-between mt-3 items-end">
-                <div class="text-xs text-gray-500">${d.area} / ${d.floor}층</div>
-                <div class="text-right">
-                    <div class="text-[10px] text-gray-400 font-medium">
-                        직전 최고: ${d.prevMax} (${d.prevDate}) ${percentHtml}
+                html += `
+                <div class="bg-white border rounded-xl p-4 shadow-sm mb-3 active:bg-gray-50 transition-colors">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-center">
+                            <h3 class="font-bold text-slate-800 text-base">${d.aptNm}</h3>
+                            ${maxTag}
+                        </div>
+                        <span class="bg-slate-100 text-slate-500 text-[10px] px-2 py-1 rounded-md font-bold">${d.date}</span>
                     </div>
-                    <div class="text-lg font-extrabold text-blue-600">${d.price}</div>
-                </div>
-            </div>
-        </div>`;
-    });
-    resultDiv.innerHTML = html;
-}
+                    <div class="flex justify-between mt-3 items-end">
+                        <div class="text-xs text-gray-500">${d.area} / ${d.floor}층</div>
+                        <div class="text-right">
+                            <div class="text-[10px] text-gray-400 font-medium">
+                                직전 최고: ${d.prevMax} (${d.prevDate}) ${percentHtml}
+                            </div>
+                            <div class="text-lg font-extrabold text-blue-600">${d.price}</div>
+                        </div>
+                    </div>
+                </div>`;
+            });
             resultDiv.innerHTML = html;
         }
     </script>

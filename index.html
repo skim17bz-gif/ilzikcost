@@ -8,22 +8,49 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700&display=swap');
         body { font-family: 'Pretendard', sans-serif; }
-        input[type="month"] { color: #1e293b !important; min-height: 3rem; }
+        
+        /* ⬇️ 핵심 수정: 날짜 입력창 클릭 가시성 및 달력 호출 강제 ⬇️ */
+        input[type="month"] {
+            position: relative;
+            background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='22' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E") no-repeat right 12px center;
+            background-size: 18px;
+            cursor: pointer;
+        }
+        /* 아이폰/크롬에서 달력 피커가 잘 동작하도록 설정 */
+        input[type="month"]::-webkit-calendar-picker-indicator {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            color: transparent;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen pb-10">
+
     <div class="max-w-lg mx-auto bg-white min-h-screen shadow-lg">
         <div class="bg-slate-800 p-6 text-white text-center">
             <h1 class="text-2xl font-bold italic">광명역 아파트 실거래가</h1>
             <p class="text-slate-400 text-sm mt-1 font-bold">조회기간과 단지 및 면적을 선택해 주세요</p>
         </div>
 
-        <div class="p-4 space-y-3 border-b sticky top-0 bg-white z-20 shadow-sm">
-            <div class="grid grid-cols-2 gap-2">
-                <input type="month" id="startYm" class="p-3 border-2 border-slate-100 rounded-xl text-sm font-bold">
-                <input type="month" id="endYm" class="p-3 border-2 border-slate-100 rounded-xl text-sm font-bold">
+        <div class="p-4 space-y-4 border-b sticky top-0 bg-white z-20 shadow-sm">
+            
+            <div class="grid grid-cols-2 gap-3">
+                <div class="flex flex-col">
+                    <span class="text-[10px] text-slate-500 font-bold mb-1 ml-1">조회 시작월</span>
+                    <input type="month" id="startYm" class="w-full h-12 px-3 border border-slate-200 rounded-xl text-sm font-bold shadow-sm">
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[10px] text-slate-500 font-bold mb-1 ml-1">조회 종료월</span>
+                    <input type="month" id="endYm" class="w-full h-12 px-3 border border-slate-200 rounded-xl text-sm font-bold shadow-sm">
+                </div>
             </div>
-            <select id="selectedApt" class="w-full p-3 border-2 border-slate-50 rounded-xl text-sm bg-gray-50">
+
+            <select id="selectedApt" class="w-full h-12 px-3 border border-slate-200 rounded-xl text-sm bg-gray-50 font-medium">
                 <option value="전체 단지">전체 단지</option>
                 <option value="광명역써밋플레이스">광명역써밋플레이스</option>
                 <option value="유-플래닛태영데시앙">유-플래닛태영데시앙</option>
@@ -31,26 +58,32 @@
                 <option value="광명역파크자이">광명역파크자이</option>
                 <option value="광명역센트럴자이">광명역센트럴자이</option>
             </select>
-            <select id="selectedArea" class="w-full p-3 border-2 border-slate-50 rounded-xl text-sm bg-gray-50">
+
+            <select id="selectedArea" class="w-full h-12 px-3 border border-slate-200 rounded-xl text-sm bg-gray-50 font-medium">
                 <option value="전체 면적">전체 면적</option>
                 <option value="59형(26평)">59형(26평)</option>
                 <option value="84형(34평)">84형(34평)</option>
             </select>
-            <button onclick="fetchAllData()" id="btnFetch" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg">조회하기</button>
+
+            <button onclick="fetchAllData()" id="btnFetch" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg active:bg-blue-800 transition-colors">
+                실거래가 조회하기
+            </button>
             
-            <div id="sortContainer" class="hidden flex gap-2 pt-2">
+            <div id="sortContainer" class="hidden flex gap-2 pt-1">
                 <button onclick="sortData('date')" id="sortDateBtn" class="flex-1 py-2 rounded-lg text-[11px] font-bold bg-blue-600 text-white">🗓 최신순</button>
-                <button onclick="sortData('price')" id="sortPriceBtn" class="flex-1 py-2 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600">💰 금액순</button>
+                <button onclick="sortData('price')" id="sortPriceBtn" class="flex-1 py-2 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200">💰 금액순</button>
             </div>
         </div>
 
         <div id="resultList" class="p-4 space-y-3">
-            <div class="text-center text-gray-400 mt-20"><p>데이터를 불러오려면 조회 버튼을 눌러주세요.</p></div>
+            <div class="text-center text-gray-400 mt-20">
+                <p>조회 버튼을 눌러 데이터를 불러오세요.</p>
+            </div>
         </div>
     </div>
 
     <script>
-        const GAS_URL ="https://script.google.com/macros/s/AKfycbzVPL3ZKT42YZRkRLHK1K6htwYnPkhXM4jrazdjPOgIrC5IEUmO5KsNYi0NUsVM1aA4ig/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyjZIkJA0mbMDH3AKrocAmwSAOsoAwajuU-5ItPoADNk1DHzHAuHCajIltNP0GZle0Tyw/exec";
         let currentData = [];
 
         window.onload = function() {
@@ -69,8 +102,8 @@
             const btn = document.getElementById('btnFetch');
             const resultDiv = document.getElementById('resultList');
 
-            btn.disabled = true; btn.innerText = "서버 연결 중...";
-            resultDiv.innerHTML = '<div class="text-center py-10 animate-pulse">🚀 데이터를 가져오고 있습니다...</div>';
+            btn.disabled = true; btn.innerText = "조회 중...";
+            resultDiv.innerHTML = '<div class="text-center py-10 animate-pulse">🚀 데이터를 분석하고 있습니다...</div>';
 
             try {
                 const response = await fetch(`${GAS_URL}?startYm=${startYm}&endYm=${endYm}`);
@@ -85,7 +118,7 @@
                 document.getElementById('sortContainer').classList.remove('hidden');
                 sortData('date'); 
             } catch (e) {
-                resultDiv.innerHTML = `<div class="p-4 bg-red-50 text-red-600 rounded-xl text-center font-bold">서버 연결 실패<br><span class="text-xs font-normal">GAS 배포 설정(모든 사용자)을 확인하세요.</span></div>`;
+                resultDiv.innerHTML = `<div class="p-4 bg-red-50 text-red-600 rounded-xl text-center font-bold text-xs">서버 연결 실패. 배포 설정을 확인하세요.</div>`;
             } finally {
                 btn.disabled = false; btn.innerText = "조회하기";
             }
@@ -94,41 +127,37 @@
         function sortData(type) {
             const dateBtn = document.getElementById('sortDateBtn');
             const priceBtn = document.getElementById('sortPriceBtn');
-            
             if (type === 'date') {
                 currentData.sort((a, b) => new Date(b.date) - new Date(a.date));
                 dateBtn.className = "flex-1 py-2 rounded-lg text-[11px] font-bold bg-blue-600 text-white";
-                priceBtn.className = "flex-1 py-2 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600";
+                priceBtn.className = "flex-1 py-2 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200";
             } else {
                 currentData.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
                 priceBtn.className = "flex-1 py-2 rounded-lg text-[11px] font-bold bg-blue-600 text-white";
-                dateBtn.className = "flex-1 py-2 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600";
+                dateBtn.className = "flex-1 py-2 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200";
             }
             renderData(currentData);
         }
 
         function renderData(data) {
             const resultDiv = document.getElementById('resultList');
-            if (data.length === 0) { resultDiv.innerHTML = '<p class="text-center py-10 text-gray-400">거래 데이터가 없습니다.</p>'; return; }
-
+            if (data.length === 0) { resultDiv.innerHTML = '<p class="text-center py-10 text-gray-400">데이터가 없습니다.</p>'; return; }
             let html = `<p class="text-[10px] text-gray-400 mb-2 font-bold">총 ${data.length}건 발견</p>`;
             data.forEach(d => {
-                const isNewMax = d.isMax;
                 const ratio = ((parseFloat(d.price) / parseFloat(d.prevMax)) * 100).toFixed(1);
                 const ratioColor = ratio >= 100 ? 'text-red-500 font-bold' : (ratio >= 95 ? 'text-orange-500' : 'text-gray-400');
-                const maxTag = isNewMax ? `<span class="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded ml-2 border border-amber-300 animate-bounce">👑 역대 신고가</span>` : '';
-
+                const maxTag = d.isMax ? `<span class="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded ml-2 border border-amber-300 animate-bounce">👑 역대 신고가</span>` : '';
                 html += `
                 <div class="bg-white border rounded-2xl p-4 shadow-sm mb-3">
                     <div class="flex justify-between items-start">
-                        <div class="flex items-center"><h3 class="font-bold text-slate-800">${d.aptNm}</h3>${maxTag}</div>
+                        <div class="flex items-center"><h3 class="font-bold text-slate-800 text-base">${d.aptNm}</h3>${maxTag}</div>
                         <span class="text-slate-400 text-[10px] font-bold">${d.date}</span>
                     </div>
                     <div class="flex justify-between mt-4 items-end">
-                        <div class="text-xs text-gray-400">${d.area} / ${d.floor}층</div>
+                        <div class="text-xs text-gray-400 font-medium">${d.area} / ${d.floor}층</div>
                         <div class="text-right">
                             <div class="text-[10px] text-gray-400 mb-1">직전 최고: ${d.prevMax} (${d.prevDate}) <span class="${ratioColor}">[${ratio}%]</span></div>
-                            <div class="text-xl font-extrabold text-blue-600">${d.price}</div>
+                            <div class="text-xl font-extrabold text-blue-600 tracking-tight">${d.price}</div>
                         </div>
                     </div>
                 </div>`;

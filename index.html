@@ -2,25 +2,37 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>일직동 실거래가 알림이</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700&display=swap');
         body { font-family: 'Pretendard', sans-serif; }
         
-        /* 연월 입력창 스타일 및 클릭 가시성 확보 */
+        /* ⬇️ 핵심 수정: 중앙 정렬 및 터치 인식 강화 ⬇️ */
         input[type="month"] {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center; /* 텍스트 중앙 정렬 */
             color: #1e293b !important;
-            min-height: 3rem;
+            min-height: 3.5rem;
             cursor: pointer;
             position: relative;
+            appearance: none;
+            -webkit-appearance: none;
+            background-color: white;
         }
-        /* 모바일에서 달력 팝업이 잘 뜨도록 강제 */
+
+        /* 아이폰/안드로이드에서 빈 공간을 눌러도 달력이 뜨도록 강제 */
         input[type="month"]::-webkit-calendar-picker-indicator {
             position: absolute;
-            left: 0; top: 0; width: 100%; height: 100%;
-            background: transparent; color: transparent; cursor: pointer;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0; /* 아이콘은 숨기고 영역만 전체로 확장 */
+            cursor: pointer;
         }
     </style>
 </head>
@@ -33,17 +45,17 @@
 
         <div class="p-4 space-y-3 border-b sticky top-0 bg-white z-20 shadow-sm">
             <div class="grid grid-cols-2 gap-2">
-                <div class="flex flex-col">
-                    <span class="text-[10px] text-slate-500 font-bold mb-1 ml-1">시작월</span>
-                    <input type="month" id="startYm" class="p-3 border-2 border-slate-100 rounded-xl text-sm font-bold">
+                <div class="flex flex-col text-center">
+                    <span class="text-[10px] text-slate-500 font-bold mb-1">시작월</span>
+                    <input type="month" id="startYm" class="p-3 border-2 border-slate-100 rounded-xl text-sm font-bold shadow-sm">
                 </div>
-                <div class="flex flex-col">
-                    <span class="text-[10px] text-slate-500 font-bold mb-1 ml-1">종료월</span>
-                    <input type="month" id="endYm" class="p-3 border-2 border-slate-100 rounded-xl text-sm font-bold">
+                <div class="flex flex-col text-center">
+                    <span class="text-[10px] text-slate-500 font-bold mb-1">종료월</span>
+                    <input type="month" id="endYm" class="p-3 border-2 border-slate-100 rounded-xl text-sm font-bold shadow-sm">
                 </div>
             </div>
             
-            <select id="selectedApt" class="w-full p-3 border-2 border-slate-50 rounded-xl text-sm bg-gray-50 font-bold">
+            <select id="selectedApt" class="w-full p-3 border-2 border-slate-50 rounded-xl text-sm bg-gray-50 font-bold text-center">
                 <option value="전체 단지">전체 단지</option>
                 <option value="광명역써밋플레이스">광명역써밋플레이스</option>
                 <option value="유-플래닛태영데시앙">유-플래닛태영데시앙</option>
@@ -52,7 +64,7 @@
                 <option value="광명역센트럴자이">광명역센트럴자이</option>
             </select>
 
-            <select id="selectedArea" class="w-full p-3 border-2 border-slate-50 rounded-xl text-sm bg-gray-50 font-bold">
+            <select id="selectedArea" class="w-full p-3 border-2 border-slate-50 rounded-xl text-sm bg-gray-50 font-bold text-center">
                 <option value="전체 면적">전체 면적</option>
                 <option value="59형(26평)">59형(26평)</option>
                 <option value="84형(34평)">84형(34평)</option>
@@ -70,7 +82,7 @@
             <div class="text-center text-gray-400 mt-20"><p>데이터를 불러오려면 조회 버튼을 눌러주세요.</p></div>
         </div>
     </div>
-
+    
     <script>
         // ⚠️ 본인의 GAS 웹 앱 URL을 여기에 넣으세요
         const GAS_URL = "https://script.google.com/macros/s/AKfycbxpD3M8IU8kg1aCqkfqfOYY8mMNGlSXJGYTY5Sx1wzhh_1_uQR0IPk0XiJ6riSEWNfuLA/exec";

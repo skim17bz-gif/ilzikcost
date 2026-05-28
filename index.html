@@ -23,7 +23,7 @@
                 <input type="month" id="startYm" class="p-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 color-scheme-dark">
                 <input type="month" id="endYm" class="p-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 color-scheme-dark">
             </div>
-            <select id="selectedApt" class="w-full p-2 border border-slate-700 rounded-lg text-sm bg-slate-800 text-slate-200 focus:outline-none focus:border-blue-500">
+            <select id="selectedApt" class="w-full p-2 border border-slate-700 rounded-lg text-sm bg-slate-800 text-slate-200 focus:outline-none">
                 <option value="전체 단지">전체 단지</option>
                 <option value="광명역써밋플레이스">광명역써밋플레이스</option>
                 <option value="유-플래닛태영데시앙">유-플래닛태영데시앙</option>
@@ -31,7 +31,7 @@
                 <option value="광명역파크자이">광명역파크자이</option>
                 <option value="광명역센트럴자이">광명역센트럴자이</option>
             </select>
-            <select id="selectedArea" class="w-full p-2 border border-slate-700 rounded-lg text-sm bg-slate-800 text-slate-200 focus:outline-none focus:border-blue-500">
+            <select id="selectedArea" class="w-full p-2 border border-slate-700 rounded-lg text-sm bg-slate-800 text-slate-200 focus:outline-none">
                 <option value="전체 면적">전체 면적</option>
                 <option value="59형(26평)">59형(26평)</option>
                 <option value="84형(34평)">84형(34평)</option>
@@ -52,18 +52,18 @@
 
         <div id="resultList" class="p-4 space-y-3 flex-1">
             <div class="text-center text-slate-500 mt-20">
-                <p>구글 서버를 통해 데이터를 안전하게 불러옵니다.</p>
+                <p> 국토교통부 실거래가를 안전하게 불러옵니다.</p>
             </div>
         </div>
     </div>
 
     <style>
-        /* 모바일 기기 달력 팝업 아이콘 색상 대응을 위한 다크 스타일 */
         .color-scheme-dark { color-scheme: dark; }
     </style>
 
     <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbxXwDlYOijFq3hwzcBF1_tux6vJ9nOE8XkuDN7BcR9nnlB6G60qulofGaQI-YdLwYxMig/exec";
+        // ★중요: 새 구글 계정의 새 배포 Web App URL을 여기에 붙여넣으세요
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzhyRumrfeS7sZ6Gs3UD8kMFn0hzrz0Csae4wSgdDEtEnsRjDOZJb0olZiBh1322QKj/exec";
 
         let currentData = []; 
 
@@ -108,7 +108,7 @@
                 resultDiv.innerHTML = `<div class="p-4 bg-red-950/50 border border-red-900 text-red-400 rounded-lg text-sm text-center font-bold">서버 연결 실패</div>`;
             } finally {
                 btn.disabled = false;
-                btn.innerText = "조회하기";
+                btn.innerText = "조ня하기";
             }
         }
 
@@ -149,16 +149,17 @@
                     const diff = (currentPrice - previousMax).toFixed(2);
                     const diffText = diff > 0 ? `+${diff}억` : (diff < 0 ? `${diff}억` : "보합");
                     ratioText = `${ratio}% (${diffText})`;
-                    // 어두운 화면에 맞춰 형광 톤이 아닌 눈이 편한 파스텔톤 다크 컬러 적용
                     if (currentPrice > previousMax) ratioColor = "text-red-400 bg-red-950/60 font-bold border border-red-900/40";
                     else if (currentPrice < previousMax) ratioColor = "text-blue-400 bg-blue-950/60 font-bold border border-blue-900/40";
                 }
 
                 const maxBadge = d.isMax ? `<span class="bg-red-600 text-white text-[9px] px-1.5 py-0.5 rounded ml-1.5 font-bold animate-pulse">신고가</span>` : '';
-                // 신기록 카드는 은은한 붉은 테두리, 일반 카드는 어두운 회색 카드 처리
-                const cardStyle = d.isMax ? 'border-red-900 bg-slate-900 shadow-lg' : 'border-slate-800 bg-slate-950 shadow-sm';
+                const cardStyle = d.isMax ? 'border-red-300 bg-slate-900 shadow-lg' : 'border-slate-800 bg-slate-950 shadow-sm';
 
                 const formattedPrevDate = (d.prevDate && d.prevDate.length >= 10) ? d.prevDate.substring(2) : d.prevDate;
+                
+                // 등록일 포맷팅 두자리 축소 (2024-05-10 -> 24-05-10)
+                const formattedRegDate = (d.regDate && d.regDate.length >= 10) ? d.regDate.substring(2) : d.regDate;
 
                 html += `
                 <div class="${cardStyle} border rounded-xl p-3 mb-2 text-sm transition-all">
@@ -174,12 +175,16 @@
                     </div>
 
                     <div class="flex justify-between items-center mt-1.5 pt-1.5 border-t border-slate-800 text-[11px]">
-                        <div class="text-slate-500 flex items-center">
-                            <svg class="w-3 h-3 mr-0.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            ${d.date.substring(2)}
+                        <div class="text-slate-500 flex flex-col gap-0.5">
+                            <div class="flex items-center">
+                                <span class="text-slate-600 mr-1">계약</span> ${d.date.substring(2)}
+                            </div>
+                            <div class="flex items-center text-slate-600">
+                                <span class="mr-1">등기</span> <span class="${formattedRegDate !== '-' ? 'text-slate-400' : 'text-slate-600'}">${formattedRegDate}</span>
+                            </div>
                         </div>
                         
-                        <div class="flex items-center gap-1.5">
+                        <div class="flex items-center gap-1.5 self-end">
                             <span class="text-slate-500">직전 최고 <span class="text-slate-300 font-medium">${d.prevMax}</span> <span class="text-[10px] text-slate-600">(${formattedPrevDate})</span></span>
                             <span class="px-1.5 py-0.5 rounded text-[10px] ${ratioColor}">${ratioText}</span>
                         </div>

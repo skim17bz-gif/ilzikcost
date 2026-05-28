@@ -123,22 +123,21 @@
             }
             renderData(currentData);
         }
-
-        function renderData(data) {
+       function renderData(data) {
     const resultDiv = document.getElementById('resultList');
     if (!data || data.length === 0) {
         resultDiv.innerHTML = '<p class="text-center py-20 text-gray-400">조건에 맞는 데이터가 없습니다.</p>';
         return;
     }
 
-    let html = `<p class="text-xs text-slate-500 mb-3 px-1 font-medium">총 ${data.length}건의 거래 정보</p>`;
+    let html = `<p class="text-xs text-slate-500 mb-2 px-1 font-medium">총 ${data.length}건의 거래 정보</p>`;
     
     data.forEach(d => {
         const currentPrice = parseFloat(d.price.replace("억", ""));
         const previousMax = parseFloat(d.prevMax.replace("억", ""));
         
-        let ratioText = "";
-        let ratioBg = "bg-slate-100 text-slate-500";
+        let ratioText = "직전 정보 없음";
+        let ratioColor = "text-slate-400 bg-slate-50";
         
         if (previousMax > 0) {
             const ratio = ((currentPrice / previousMax) * 100).toFixed(1);
@@ -146,48 +145,34 @@
             const diffText = diff > 0 ? `+${diff}억` : (diff < 0 ? `${diff}억` : "보합");
             ratioText = `${ratio}% (${diffText})`;
             
-            if (currentPrice > previousMax) ratioBg = "bg-red-50 text-red-600 font-bold";
-            else if (currentPrice < previousMax) ratioBg = "bg-blue-50 text-blue-600 font-bold";
+            if (currentPrice > previousMax) ratioColor = "text-red-600 bg-red-50 font-bold";
+            else if (currentPrice < previousMax) ratioColor = "text-blue-600 bg-blue-50 font-bold";
         }
 
-        const isNewMax = d.isMax;
-        const maxBadge = isNewMax ? `<span class="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-md font-bold ml-2">신고가</span>` : '';
-        // 신고가일 때 테두리와 그림자 강조
-        const cardStyle = isNewMax ? 'ring-2 ring-red-500 shadow-md' : 'border-slate-200 shadow-sm';
+        const maxBadge = d.isMax ? `<span class="bg-red-600 text-white text-[9px] px-1.5 py-0.5 rounded ml-1.5 font-bold">신고가</span>` : '';
+        const cardStyle = d.isMax ? 'border-red-300 bg-red-50/10 shadow-sm' : 'border-slate-200 bg-white shadow-sm';
 
         html += `
-        <div class="bg-white border ${cardStyle} rounded-2xl p-5 mb-4 transition-all">
-            <div class="flex justify-between items-start mb-4">
-                <div>
-                    <div class="flex items-center mb-1">
-                        <h3 class="font-extrabold text-slate-900 text-lg tracking-tight">${d.aptNm}</h3>
-                        ${maxBadge}
-                    </div>
-                    <div class="flex items-center text-slate-400 text-[11px]">
-                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                        ${d.date} 거래
-                    </div>
+        <div class="${cardStyle} border rounded-xl p-3 mb-2 text-sm transition-all">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center min-w-0 flex-1 mr-2">
+                    <h3 class="font-extrabold text-slate-900 text-sm truncate tracking-tight">${d.aptNm}</h3>
+                    ${maxBadge}
                 </div>
-                <div class="text-right px-2 py-1 bg-slate-50 rounded-lg border border-slate-100">
-                    <span class="text-slate-700 text-xs font-bold">${d.floor}층</span>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <span class="text-slate-500 text-xs">${d.area.split('형')[0]}형 / ${d.floor}층</span>
+                    <span class="text-lg font-black text-slate-900 tracking-tighter">${d.price}</span>
                 </div>
             </div>
 
-            <div class="flex justify-between items-center mb-4 pt-2 border-t border-slate-50">
-                <span class="text-slate-500 font-medium text-sm">${d.area}</span>
-                <span class="text-3xl font-black text-blue-600 tracking-tighter">${d.price}</span>
-            </div>
-
-            <div class="bg-slate-50 rounded-xl p-3 flex justify-between items-center">
-                <div class="text-[11px] text-slate-500">
-                    <div class="flex items-center opacity-70 mb-0.5">
-                        <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                        직전 최고가 (${d.prevDate})
-                    </div>
-                    <div class="text-slate-800 font-bold text-xs">${d.prevMax}</div>
-                </div>
-                <div class="px-3 py-1.5 rounded-lg text-xs ${ratioBg}">
-                    ${ratioText}
+            <div class="flex justify-between items-center mt-1.5 pt-1.5 border-t border-slate-100 text-[11px]">
+                <div class="text-slate-400 flex items-center">
+                    <svg class="w-3 h-3 mr-0.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    ${d.date.substring(2)} </div>
+                
+                <div class="flex items-center gap-1.5">
+                    <span class="text-slate-400">직전 최고 ${d.prevMax} <span class="text-[10px]">(${d.prevDate.substring(5)})</span></span>
+                    <span class="px-1.5 py-0.5 rounded text-[10px] ${ratioColor}">${ratioText}</span>
                 </div>
             </div>
         </div>`;
